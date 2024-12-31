@@ -95,7 +95,8 @@ class raw_env(SimpleEnv, EzPickle):
             local_ratio=local_ratio,
             dynamic_rescaling=dynamic_rescaling,
         )
-        self.metadata["name"] = "simple_spread_v3"
+        self.metadata["name"] = "simple_spread_new"
+        self.metadata["render_fps"] = 50
 
 
 env = make_env(raw_env)
@@ -192,14 +193,15 @@ class Scenario(BaseScenario):
         entity_pos = []
         for entity in world.landmarks:  # world.entities:
             entity_pos.append(entity.state.p_pos - agent.state.p_pos)
-        # communication of all other agents
-        comm = []
-        other_pos = []
+        # position & communication of all other agents
+        # comm = []
+        other_pos_comm = []
         for other in world.agents:
             if other is agent:
                 continue
-            comm.append(other.state.c)
-            other_pos.append(other.state.p_pos - agent.state.p_pos)
+            other_pos_comm.append(other.state.p_pos - agent.state.p_pos)
+            other_pos_comm.append(other.state.c)
+            
         return np.concatenate(
-            [agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + comm
+            [agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos_comm
         )
