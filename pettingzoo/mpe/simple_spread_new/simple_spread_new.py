@@ -203,5 +203,5 @@ class Scenario(BaseScenario):
             other_pos_comm.append(other.state.c)
             
         return np.concatenate(
-            [agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos_comm
+            [agent.state.p_pos] + [agent.state.p_vel] + other_pos_comm + entity_pos
         )
