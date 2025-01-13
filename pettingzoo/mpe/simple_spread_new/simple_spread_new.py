@@ -96,7 +96,7 @@ class raw_env(SimpleEnv, EzPickle):
             dynamic_rescaling=dynamic_rescaling,
         )
         self.metadata["name"] = "simple_spread_new"
-        self.metadata["render_fps"] = 50
+        self.metadata["render_fps"] = 72
 
 
 env = make_env(raw_env)
@@ -117,7 +117,8 @@ class Scenario(BaseScenario):
             agent.name = f"agent_{i}"
             agent.collide = True
             agent.silent = True
-            agent.size = 0.15
+            # agent.size = 0.15
+            agent.size = 0.03
         # add landmarks
         world.landmarks = [Landmark() for i in range(num_landmarks)]
         for i, landmark in enumerate(world.landmarks):
@@ -200,7 +201,8 @@ class Scenario(BaseScenario):
             if other is agent:
                 continue
             other_pos_comm.append(other.state.p_pos - agent.state.p_pos)
-            other_pos_comm.append(other.state.c)
+            other_pos_comm.append(other.state.p_vel)
+            #other_pos_comm.append(other.state.c)
             
         return np.concatenate(
             [agent.state.p_pos] + [agent.state.p_vel] + other_pos_comm + entity_pos
