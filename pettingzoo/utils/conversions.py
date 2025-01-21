@@ -221,7 +221,8 @@ class aec_to_parallel_wrapper(ParallelEnv[AgentID, ObsType, ActionType]):
             self.aec_env.step(None)
 
         self.agents = self.aec_env.agents
-        return observations, rewards, terminations, truncations, infos
+        return observations, rewards, terminations, truncations, infos, \
+            self.aec_env.global_reward, self.aec_env.agent_rewards
 
     def render(self):
         return self.aec_env.render()

@@ -54,6 +54,7 @@ simple_spread_v3.env(N=3, local_ratio=0.5, max_cycles=25, continuous_actions=Fal
 """
 
 import numpy as np
+import heapq
 from gymnasium.utils import EzPickle
 
 from pettingzoo.mpe._mpe_utils.core import Agent, Landmark, World
@@ -67,6 +68,7 @@ class raw_env(SimpleEnv, EzPickle):
         self,
         N=10,
         local_ratio=0.5,
+        min_N = 1,
         max_cycles=25,
         continuous_actions=False,
         render_mode=None,
@@ -76,6 +78,7 @@ class raw_env(SimpleEnv, EzPickle):
             self,
             N=N,
             local_ratio=local_ratio,
+            min_N=min_N,
             max_cycles=max_cycles,
             continuous_actions=continuous_actions,
             render_mode=render_mode,
@@ -83,7 +86,10 @@ class raw_env(SimpleEnv, EzPickle):
         assert (
             0.0 <= local_ratio <= 1.0
         ), "local_ratio is a proportion. Must be between 0 and 1."
-        scenario = Scenario()
+        assert (
+            1 <= min_N <= N
+        ), "local_ratio is a proportion. Must be between 0 and 1."
+        scenario = Scenario(min_N=min_N)
         world = scenario.make_world(N)
         SimpleEnv.__init__(
             self,
@@ -93,6 +99,7 @@ class raw_env(SimpleEnv, EzPickle):
             max_cycles=max_cycles,
             continuous_actions=continuous_actions,
             local_ratio=local_ratio,
+            min_N=min_N,
             dynamic_rescaling=dynamic_rescaling,
         )
         self.metadata["name"] = "simple_spread_new"
@@ -104,6 +111,9 @@ parallel_env = parallel_wrapper_fn(env)
 
 
 class Scenario(BaseScenario):
+    def __init__(self, min_N):
+        self.min_N = min_N
+
     def make_world(self, N=3):
         world = World()
         # set any world properties first
@@ -115,7 +125,7 @@ class Scenario(BaseScenario):
         world.agents = [Agent() for i in range(num_agents)]
         for i, agent in enumerate(world.agents):
             agent.name = f"agent_{i}"
-            agent.collide = True
+            agent.collide = False
             agent.silent = True
             # agent.size = 0.15
             agent.size = 0.03
@@ -177,7 +187,12 @@ class Scenario(BaseScenario):
         #     for a in world.agents:
         #         rew -= 1.0 * (self.is_collision(a, agent) and a != agent)
         # return rew
-        return 0.
+        dists = [np.sqrt(np.sum(np.square(agent.state.p_pos - lm.state.p_pos))) for lm in world.landmarks]
+        if self.min_N == 1:
+            return -min(dists)
+
+        min_N_dists = heapq.nsmallest(self.min_N, dists)
+        return -sum(min_N_dists)
 
     def global_reward(self, world):
         rew = 0

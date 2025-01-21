@@ -42,6 +42,7 @@ class SimpleEnv(AECEnv):
         render_mode=None,
         continuous_actions=False,
         local_ratio=None,
+        min_N=None,
         dynamic_rescaling=False,
     ):
         super().__init__()
@@ -67,6 +68,7 @@ class SimpleEnv(AECEnv):
         self.world = world
         self.continuous_actions = continuous_actions
         self.local_ratio = local_ratio
+        self.min_N = min_N
         self.dynamic_rescaling = dynamic_rescaling
 
         self.scenario.reset_world(self.world, self.np_random)
@@ -157,6 +159,8 @@ class SimpleEnv(AECEnv):
 
         self.agents = self.possible_agents[:]
         self.rewards = {name: 0.0 for name in self.agents}
+        self.global_reward = 0.
+        self.agent_rewards = {name: 0.0 for name in self.agents}
         self._cumulative_rewards = {name: 0.0 for name in self.agents}
         self.terminations = {name: False for name in self.agents}
         self.truncations = {name: False for name in self.agents}
@@ -189,9 +193,12 @@ class SimpleEnv(AECEnv):
         global_reward = 0.0
         if self.local_ratio is not None:
             global_reward = float(self.scenario.global_reward(self.world))
+        self.global_reward = global_reward
+        self.agent_rewards = {name: 0.0 for name in self.agents}
 
         for agent in self.world.agents:
             agent_reward = float(self.scenario.reward(agent, self.world))
+            self.agent_rewards[agent.name] = agent_reward
             if self.local_ratio is not None:
                 reward = (
                     global_reward * (1 - self.local_ratio)
